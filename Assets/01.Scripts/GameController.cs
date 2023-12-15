@@ -104,10 +104,23 @@ public class GameController : MonoBehaviour
         CylinderMove(selCylinderTemp.transform, targetPos, async () =>
         {
             var dir = Vector3.zero;
+            var liquids = selCylinderTemp.liquids;
             if (selCylinderTemp.transform.position.x >= tarCylinderTemp.transform.position.x)
+            {
                 dir = Vector3.forward;
+                for (var i = 0; i < liquids.Length; i++)
+                {
+                    liquids[i].transform.localPosition += Vector3.left;
+                }
+            }
             else
+            {
                 dir = Vector3.back;
+                for (var i = 0; i < liquids.Length; i++)
+                {
+                    liquids[i].transform.localPosition += Vector3.right;
+                }
+            }
             CylinderRotate(selCylinderTemp.transform, dir * 45f);
 
             while (tempClearCount > 0)
@@ -120,8 +133,25 @@ public class GameController : MonoBehaviour
                 tempClearCount--;
             }
 
+            selCylinderTemp.CheckState();
+
             CylinderRotate(selCylinderTemp.transform, Vector3.zero, () =>
             {
+                if (dir == Vector3.forward)
+                {
+                    for (var i = 0; i < liquids.Length; i++)
+                    {
+                        liquids[i].transform.localPosition += Vector3.right;
+                    }
+                }
+                else
+                {
+                    for (var i = 0; i < liquids.Length; i++)
+                    {
+                        liquids[i].transform.localPosition += Vector3.left;
+                    }
+                }
+
                 CylinderMove(selCylinderTemp.transform, selCylinderOriPos, () =>
                 {
                     selCylinderTemp.sortingGroup.sortingOrder = 0;
@@ -153,7 +183,14 @@ public class GameController : MonoBehaviour
 
     private void CylinderRotate(Transform cylinder, Vector3 rot, Action moveEndAction = null)
     {
-        cylinder.DORotate(rot, 0.5f/*, RotateMode.FastBeyond360*/).SetEase(Ease.InQuad).OnComplete(() =>
+        var liquids = cylinder.GetComponent<CylinderController>().liquids;
+        cylinder.DORotate(rot, 0.5f).OnUpdate(() =>
+        {
+            for (var i = 0; i < liquids.Length; i++)
+            {
+                liquids[i].transform.rotation = Quaternion.identity;
+            }
+        }).SetEase(Ease.InQuad).OnComplete(() =>
         {
             moveEndAction?.Invoke();
         });
