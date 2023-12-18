@@ -32,7 +32,7 @@ public class GameController : MonoBehaviour
         selCylinder.transform.position += Vector3.down;
         selCylinder = null;
     }
-    public async UniTask Pour(CylinderController cylinder)
+    public void Pour(CylinderController cylinder)
     {
         tarCylinder = cylinder;
         selCylinder.isPouring = true;
@@ -101,6 +101,9 @@ public class GameController : MonoBehaviour
 
         var selCylinderOriPos = selCylinder.transform.position + Vector3.down;
 
+        InitCylinders();
+
+
         CylinderMove(selCylinderTemp.transform, targetPos, async () =>
         {
             var dir = Vector3.zero;
@@ -121,21 +124,38 @@ public class GameController : MonoBehaviour
                     liquids[i].transform.localPosition += Vector3.right;
                 }
             }
-            CylinderRotate(selCylinderTemp.transform, dir * 45f);
 
-            while (tempClearCount > 0)
+            //여기서 어웨이트
+            await UniTask.WaitUntil(() => tarCylinderTemp.selCylinder == null);
+
+            if (tarCylinderTemp.selCylinder == null)
             {
-                var selLiquid = templiquidQue.Dequeue();
-                var tarLiquid = tarLiquidQue.Dequeue();
-                LiquidOut(selLiquid, tarLiquid);
-                await UniTask.WaitUntil(() => selLiquid.transform.localScale.y <= 0);
-                selLiquid.transform.localScale = Vector3.one;
-                tempClearCount--;
+                tarCylinderTemp.selCylinder = selCylinderTemp;
+            }
+            else
+            {
+                tarCylinderTemp.waitingCylinders.Enqueue(selCylinderTemp);
             }
 
-            selCylinderTemp.CheckState();
+            CylinderRotate(selCylinderTemp.transform, dir * 45f, Ease.OutQuad, async () =>
+            {
+                while (tempClearCount > 0)
+                {
+                    if (templiquidQue.Count == 0) break;
+                    var selLiquid = templiquidQue.Dequeue();
+                    var tarLiquid = tarLiquidQue.Dequeue();
+                    LiquidOut(selLiquid, tarLiquid);
+                    await UniTask.WaitUntil(() => selLiquid.transform.localScale.y <= 0);
+                    selLiquid.transform.localScale = Vector3.one;
+                    tempClearCount--;
+                }
 
-            CylinderRotate(selCylinderTemp.transform, Vector3.zero, () =>
+                selCylinderTemp.CheckState();
+            });
+
+            await UniTask.WaitUntil(() => templiquidQue.Count == 0);
+
+            CylinderRotate(selCylinderTemp.transform, Vector3.zero, Ease.OutQuad, () =>
             {
                 if (dir == Vector3.forward)
                 {
@@ -152,6 +172,8 @@ public class GameController : MonoBehaviour
                     }
                 }
 
+                tarCylinderTemp.ChangeLine();
+
                 CylinderMove(selCylinderTemp.transform, selCylinderOriPos, () =>
                 {
                     selCylinderTemp.sortingGroup.sortingOrder = 0;
@@ -160,7 +182,6 @@ public class GameController : MonoBehaviour
             });
         });
 
-        InitCylinders();
     }
 
     private void InitCylinders()
@@ -181,7 +202,7 @@ public class GameController : MonoBehaviour
         tarLiquid.transform.DOScaleY(1f, 0.25f);
     }
 
-    private void CylinderRotate(Transform cylinder, Vector3 rot, Action moveEndAction = null)
+    private void CylinderRotate(Transform cylinder, Vector3 rot, Ease ease, Action moveEndAction = null)
     {
         var liquids = cylinder.GetComponent<CylinderController>().liquids;
         cylinder.DORotate(rot, 0.5f).OnUpdate(() =>
@@ -190,7 +211,7 @@ public class GameController : MonoBehaviour
             {
                 liquids[i].transform.rotation = Quaternion.identity;
             }
-        }).SetEase(Ease.InQuad).OnComplete(() =>
+        }).SetEase(ease).OnComplete(() =>
         {
             moveEndAction?.Invoke();
         });

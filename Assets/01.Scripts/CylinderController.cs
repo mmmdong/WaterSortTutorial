@@ -12,6 +12,8 @@ public class CylinderController : MonoBehaviour
 
     [HideInInspector] public SpriteRenderer[] liquids; //액체의 순서는 위에서 아래로 0 ~ 3이다.
     [HideInInspector] public SortingGroup sortingGroup;
+    public CylinderController selCylinder;
+    public Queue<CylinderController> waitingCylinders = new Queue<CylinderController>();
     public bool isFull, isEmpty, isOver, isPouring;
 
     [SerializeField] private Transform liquidsPar;
@@ -62,7 +64,7 @@ public class CylinderController : MonoBehaviour
                 return;
             }
 
-            GameController.instance.Pour(this).Forget();
+            GameController.instance.Pour(this);
         }
     }
 
@@ -97,5 +99,14 @@ public class CylinderController : MonoBehaviour
     private void CheckFull()
     {
         isFull = liquids.Count(x => x.color != Color.clear) == liquids.Length;
+    }
+
+    public void ChangeLine()
+    {
+        selCylinder = null;
+        if (waitingCylinders.Count <= 0) return;
+
+        var firstCylinder = waitingCylinders.Dequeue();
+        selCylinder.selCylinder = firstCylinder;
     }
 }
