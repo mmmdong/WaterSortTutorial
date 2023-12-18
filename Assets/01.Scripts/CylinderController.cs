@@ -5,6 +5,7 @@ using DEFINES;
 using System.Linq;
 using Cysharp.Threading.Tasks;
 using UnityEngine.Rendering;
+using UniRx;
 
 public class CylinderController : MonoBehaviour
 {
@@ -12,16 +13,29 @@ public class CylinderController : MonoBehaviour
 
     [HideInInspector] public SpriteRenderer[] liquids; //액체의 순서는 위에서 아래로 0 ~ 3이다.
     [HideInInspector] public SortingGroup sortingGroup;
-    public CylinderController selCylinder;
-    public Queue<CylinderController> waitingCylinders = new Queue<CylinderController>();
-    public bool isFull, isEmpty, isOver, isPouring;
+    public ReactiveCollection<CylinderController> cylinders = new ReactiveCollection<CylinderController>();
+    public bool isFull, isEmpty, isOver, isPoured;
 
     [SerializeField] private Transform liquidsPar;
+    private BoxCollider2D col;
 
     private void Awake()
     {
         liquids = liquidsPar.GetComponentsInChildren<SpriteRenderer>();
         sortingGroup = GetComponent<SortingGroup>();
+        col = GetComponent<BoxCollider2D>();
+
+        cylinders.ObserveAdd().Subscribe(item =>
+        {
+            if(!isPoured)
+                isPoured = true;
+        });
+
+        cylinders.ObserveRemove().Subscribe(item =>
+        {
+            if (cylinders.Count == 0) 
+                isPoured = false;
+        });
     }
 
     private void Start()
@@ -53,7 +67,7 @@ public class CylinderController : MonoBehaviour
 
         if (GameController.instance.selCylinder == null)
         {
-            if (isEmpty || isPouring) return;
+            if (isEmpty || isPoured) return;
             GameController.instance.Select(this);
         }
         else
@@ -64,7 +78,7 @@ public class CylinderController : MonoBehaviour
                 return;
             }
 
-            GameController.instance.Pour(this);
+            GameController.instance.Pour(this)/*.Forget()*/;
         }
     }
 
@@ -101,12 +115,8 @@ public class CylinderController : MonoBehaviour
         isFull = liquids.Count(x => x.color != Color.clear) == liquids.Length;
     }
 
-    public void ChangeLine()
+    public void Pouring(bool isOn)
     {
-        selCylinder = null;
-        if (waitingCylinders.Count <= 0) return;
-
-        var firstCylinder = waitingCylinders.Dequeue();
-        selCylinder.selCylinder = firstCylinder;
+        col.enabled = !isOn;
     }
 }

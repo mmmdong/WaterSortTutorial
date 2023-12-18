@@ -132,7 +132,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 5679687817169999521, guid: 432d98c4b6a48f2439eb4fb4492d4c4e, type: 3}
       propertyPath: m_Name
-      value: Cylinder
+      value: Cylinder 3
       objectReference: {fileID: 0}
     - target: {fileID: 5679687817169999533, guid: 432d98c4b6a48f2439eb4fb4492d4c4e, type: 3}
       propertyPath: colorEnums.Array.data[0]
@@ -374,7 +374,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 5679687817169999521, guid: 432d98c4b6a48f2439eb4fb4492d4c4e, type: 3}
       propertyPath: m_Name
-      value: Cylinder
+      value: Cylinder 4
       objectReference: {fileID: 0}
     - target: {fileID: 5679687817169999533, guid: 432d98c4b6a48f2439eb4fb4492d4c4e, type: 3}
       propertyPath: colorEnums.Array.data[0]
@@ -457,7 +457,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 5679687817169999521, guid: 432d98c4b6a48f2439eb4fb4492d4c4e, type: 3}
       propertyPath: m_Name
-      value: Cylinder
+      value: Cylinder 2
       objectReference: {fileID: 0}
     - target: {fileID: 5679687817169999533, guid: 432d98c4b6a48f2439eb4fb4492d4c4e, type: 3}
       propertyPath: colorEnums.Array.data[0]
@@ -584,7 +584,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 5679687817169999521, guid: 432d98c4b6a48f2439eb4fb4492d4c4e, type: 3}
       propertyPath: m_Name
-      value: Cylinder
+      value: Cylinder 1
       objectReference: {fileID: 0}
     - target: {fileID: 5679687817169999533, guid: 432d98c4b6a48f2439eb4fb4492d4c4e, type: 3}
       propertyPath: colorEnums.Array.data[0]

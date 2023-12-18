@@ -35,7 +35,8 @@ public class GameController : MonoBehaviour
     public void Pour(CylinderController cylinder)
     {
         tarCylinder = cylinder;
-        selCylinder.isPouring = true;
+        tarCylinder.cylinders.Add(selCylinder);
+        selCylinder.Pouring(true);
 
         var liquidQue = new Queue<SpriteRenderer>();
 
@@ -103,6 +104,8 @@ public class GameController : MonoBehaviour
 
         InitCylinders();
 
+        
+
 
         CylinderMove(selCylinderTemp.transform, targetPos, async () =>
         {
@@ -125,27 +128,17 @@ public class GameController : MonoBehaviour
                 }
             }
 
-            //여기서 어웨이트
-            await UniTask.WaitUntil(() => tarCylinderTemp.selCylinder == null);
-
-            if (tarCylinderTemp.selCylinder == null)
-            {
-                tarCylinderTemp.selCylinder = selCylinderTemp;
-            }
-            else
-            {
-                tarCylinderTemp.waitingCylinders.Enqueue(selCylinderTemp);
-            }
-
+            
             CylinderRotate(selCylinderTemp.transform, dir * 45f, Ease.OutQuad, async () =>
             {
+                var duration = 0.25f / templiquidQue.Count;
                 while (tempClearCount > 0)
                 {
                     if (templiquidQue.Count == 0) break;
                     var selLiquid = templiquidQue.Dequeue();
                     var tarLiquid = tarLiquidQue.Dequeue();
-                    LiquidOut(selLiquid, tarLiquid);
-                    await UniTask.WaitUntil(() => selLiquid.transform.localScale.y <= 0);
+                    LiquidOut(selLiquid, tarLiquid, duration);
+                    await UniTask.WaitUntil(() => tarLiquid.transform.localScale.y >= 1);
                     selLiquid.transform.localScale = Vector3.one;
                     tempClearCount--;
                 }
@@ -172,16 +165,16 @@ public class GameController : MonoBehaviour
                     }
                 }
 
-                tarCylinderTemp.ChangeLine();
+                tarCylinderTemp.cylinders.Remove(selCylinderTemp);
 
                 CylinderMove(selCylinderTemp.transform, selCylinderOriPos, () =>
                 {
                     selCylinderTemp.sortingGroup.sortingOrder = 0;
-                    selCylinderTemp.isPouring = false;
+                    selCylinderTemp.Pouring(false);
                 });
             });
         });
-
+        
     }
 
     private void InitCylinders()
@@ -193,13 +186,13 @@ public class GameController : MonoBehaviour
         tarCylinder = null;
     }
 
-    private void LiquidOut(SpriteRenderer selLiquid, SpriteRenderer tarLiquid)
+    private void LiquidOut(SpriteRenderer selLiquid, SpriteRenderer tarLiquid, float duration = 0.25f)
     {
-        selLiquid.transform.DOScaleY(0f, 0.25f).OnComplete(() =>
+        selLiquid.transform.DOScaleY(0f, duration).OnComplete(() =>
         {
             selLiquid.color = Color.clear;
         });
-        tarLiquid.transform.DOScaleY(1f, 0.25f);
+        tarLiquid.transform.DOScaleY(1f, duration);
     }
 
     private void CylinderRotate(Transform cylinder, Vector3 rot, Ease ease, Action moveEndAction = null)
